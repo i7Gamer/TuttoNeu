@@ -35,6 +35,14 @@ import ReactionBar from './game/ReactionBar';
 import DiceGame from './DiceGame';
 import HistoryLog from './game/HistoryLog';
 
+// Identifies the turn slot a commit handler's closure was rendered for, so
+// it can later be compared against the live store to tell whether that
+// closure is still current (see isStaleTurnClosure below). A plain string
+// key rather than a tuple/object: both call sites need to compare it with
+// `!==`, which a fresh object or array would never satisfy even for the
+// same round/seat.
+const turnSlotKey = (round: number, currentPlayerIndex: number | null) => `${round}:${currentPlayerIndex}`;
+
 // Only the fields Game actually reads (directly or via game.X below / the
 // Scoreboard prop) are selected here, with shallow equality — so a store
 // mutation that touches an unrelated slice (toasts, reactions, other
@@ -172,13 +180,29 @@ export default function Game() {
   // the chain cache's write-through under the NEW turn's key — undoing the
   // lifecycle clear one render later — so this corrects at render time (the
   // stale-modal pattern below), landing before any effect can write.
-  const turnSlot = `${round}:${currentPlayerIndex}`;
+  const turnSlot = turnSlotKey(round, currentPlayerIndex);
   const [prevTurnSlot, setPrevTurnSlot] = useState(turnSlot);
   if (turnSlot !== prevTurnSlot) {
     setPrevTurnSlot(turnSlot);
     if (scoreInput !== '') setScoreInput('');
     if (applyBonus) setApplyBonus(false);
   }
+  // D-15: the CARD_FLIP_MS gate hides the NEXT render, but the exiting
+  // AnimatePresence node (GameControls' whole input-controls panel) keeps its
+  // stale onClick closure clickable for the length of the exit tween — a
+  // double-click, or a held Enter on the focused button, reaches it a second
+  // time and commits again onto the player nextTurn already moved to. Zustand's
+  // `set` is synchronous, so by the second click the live store has already
+  // moved off the slot this closure was rendered for, and comparing against it
+  // catches the stale call without a ref or a timer. `nextTurn` always moves
+  // the seat or the round (a one-player game bumps the round; a chain draws
+  // the next card without calling it), so no two legitimate commits ever share
+  // a slot, and undo restores the old slot — so the fresh closure that follows
+  // an undo matches it again and nothing needs clearing.
+  const isStaleTurnClosure = useCallback(() => {
+    const live = useGameStore.getState();
+    return turnSlotKey(live.round, live.currentPlayerIndex) !== turnSlot;
+  }, [turnSlot]);
   // Tracks whether the dice panel's own entrance animation has finished, so
   // DiceGame knows when it's safe to start rolling automatically. Reset once
   // the panel closes so the next opening waits for its own animation again.
@@ -314,6 +338,7 @@ export default function Game() {
   useFeuerwerkFanfare(currentCard, cards?.length);
 
   const commitNextTurn = useCallback(() => {
+    if (isStaleTurnClosure()) return;
     let parsedScore = parseScoreInput(scoreInput);
     // A bonus multiplies or adds to a SCORED turn — applyTuttoBonus(0, '400')
     // is 400, so applying it to an empty box used to bank the bonus alone
@@ -342,7 +367,7 @@ export default function Game() {
     }
     setScoreInput('');
     setApplyBonus(false);
-  }, [scoreInput, applyBonus, currentCard, nextTurn, isClassic, buildPhysicalSummary, physicalAwaitingChoice, clearChain]);
+  }, [scoreInput, applyBonus, currentCard, nextTurn, isClassic, buildPhysicalSummary, physicalAwaitingChoice, clearChain, isStaleTurnClosure]);
 
   // Whether Next Turn is about to record a bust with nobody having said so on
   // purpose — modernized physical play has no explicit Bust button (that's
@@ -382,12 +407,14 @@ export default function Game() {
   // caller means when the turn scored, and the two arguments could not
   // disagree without one of them being a bug.
   const commitPhysicalTurn = useCallback((ended: TurnEnd, lastCardCompleted = false) => {
+    if (isStaleTurnClosure()) return;
     nextTurn(0, ended === 'banked', buildPhysicalSummary(ended, lastCardCompleted, parseScoreInput(scoreInput)));
     clearChain();
     setScoreInput('');
-  }, [nextTurn, buildPhysicalSummary, clearChain, scoreInput]);
+  }, [nextTurn, buildPhysicalSummary, clearChain, scoreInput, isStaleTurnClosure]);
 
   const handleYesNo = useCallback((isSuccess: boolean) => {
+    if (isStaleTurnClosure()) return;
     if (isClassic && currentCard && isSpecialCard(currentCard) && currentCard !== 'Kleeblatt') {
       // Kniffel/Plus_Minus under classic: a Yes does NOT commit the turn —
       // the card is completed, its fixed value is pre-filled into the score
@@ -415,7 +442,7 @@ export default function Game() {
       return;
     }
     nextTurn(0, isSuccess);
-  }, [nextTurn, isClassic, currentCard, completeCurrentCard, hasPhysicalChain, commitPhysicalTurn]);
+  }, [nextTurn, isClassic, currentCard, completeCurrentCard, hasPhysicalChain, commitPhysicalTurn, isStaleTurnClosure]);
 
   // Classic physical: the player made a tutto with their real dice and
   // reveals the next card, keeping the running total in the score input.
@@ -472,9 +499,10 @@ export default function Game() {
   }, [commitPhysicalTurn]);
 
   const handleDiceComplete = useCallback((score: number, isSuccess: boolean, turnSummary?: TurnSummary) => {
+    if (isStaleTurnClosure()) return;
     setShowDiceGame(false);
     nextTurn(score, isSuccess, turnSummary);
-  }, [nextTurn]);
+  }, [nextTurn, isStaleTurnClosure]);
 
   const currentCardHasInput = hasScoreInput(currentCard);
   const currentCardHasYesNo = isSpecialCard(currentCard);
