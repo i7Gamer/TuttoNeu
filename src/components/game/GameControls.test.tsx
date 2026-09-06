@@ -559,6 +559,17 @@ describe('GameControls physical dice interactions', () => {
     expect(chip.className).toMatch(/border/);
   });
 
+  // U-1 (see LanguageSwitcher.tsx): the button's own focus outline hugged the
+  // invisible hit area, not the visible chip. The ring moves to the chip via
+  // `group-focus-visible`, and the button hides its own outline.
+  it('puts the keyboard focus ring on a quick-add chip, not the hit area', () => {
+    render(<GameControls {...baseProps({ scoreInput: '' })} />);
+    const chip = screen.getByText('+100');
+    const button = chip.closest('button')!;
+    expect(button).toHaveClass('group', 'focus-visible:outline-hidden');
+    expect(chip).toHaveClass('group-focus-visible:ring-2', 'group-focus-visible:ring-indigo-500');
+  });
+
   it('quick-add button accumulates onto an existing numeric score input', () => {
     const setScoreInput = vi.fn();
     render(<GameControls {...baseProps({ scoreInput: '250', setScoreInput })} />);

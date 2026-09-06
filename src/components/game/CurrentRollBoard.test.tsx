@@ -41,6 +41,17 @@ describe('CurrentRollBoard', () => {
     expect(chip.className).toMatch(/rounded-md/);
   });
 
+  // U-1 (see LanguageSwitcher.tsx): the button's own focus outline hugged the
+  // invisible hit area, not the visible chip. The ring moves to the chip via
+  // `group-focus-visible`, and the button hides its own outline.
+  it('puts the keyboard focus ring on the Select all chip, not the hit area', () => {
+    render(<CurrentRollBoard {...baseProps} />);
+    const chip = screen.getByText('dice.select_all_valid');
+    const button = chip.closest('button')!;
+    expect(button).toHaveClass('group', 'focus-visible:outline-hidden');
+    expect(chip).toHaveClass('group-focus-visible:ring-2', 'group-focus-visible:ring-indigo-500');
+  });
+
   it('hides Select all while dice tumble and once the roll busted', () => {
     const { rerender } = render(<CurrentRollBoard {...baseProps} isRolling />);
     expect(screen.queryByText('dice.select_all_valid')).toBeNull();

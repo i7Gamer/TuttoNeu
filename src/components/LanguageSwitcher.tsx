@@ -17,14 +17,22 @@ export default function LanguageSwitcher() {
           below, so the 44px tap target no longer forces the visible pill to
           be 44px tall too. It used to: the pill was ~36px tall and the 44px
           button carrying its styling directly made the selected pill stick
-          out top and bottom of its ~36px container (B3). */}
+          out top and bottom of its ~36px container (B3). U-1: the button is
+          also the transparent hit area for keyboard focus, so the browser's
+          own outline drew around the invisible 44px box instead of the
+          visible pill. `group` lets the pill react to the button's
+          :focus-visible: the pill gets `group-focus-visible:ring-2` (the
+          house focus ring, Die.tsx/LobbyShared.tsx) and the button hides its
+          own outline with `focus-visible:outline-hidden` — not
+          `outline-none`, which would also drop the outline Windows High
+          Contrast (forced-colours) mode draws regardless of CSS. */}
       <button
         onClick={() => void i18n.changeLanguage('en')}
         aria-label={t('app.switchToEnglish', 'Switch to English')}
         aria-pressed={currentLanguage.startsWith('en')}
-        className="min-h-11 min-w-11 flex items-center justify-center -my-2"
+        className="group min-h-11 min-w-11 flex items-center justify-center -my-2 focus-visible:outline-hidden"
       >
-        <span className={`px-3 py-1 rounded-md text-sm font-bold transition-all ${currentLanguage.startsWith('en') ? 'bg-white dark:bg-slate-700 shadow-xs text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}>
+        <span className={`px-3 py-1 rounded-md text-sm font-bold transition-all group-focus-visible:ring-2 group-focus-visible:ring-indigo-500 ${currentLanguage.startsWith('en') ? 'bg-white dark:bg-slate-700 shadow-xs text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}>
           EN
         </span>
       </button>
@@ -32,9 +40,9 @@ export default function LanguageSwitcher() {
         onClick={() => void i18n.changeLanguage('de')}
         aria-label={t('app.switchToGerman', 'Switch to German')}
         aria-pressed={currentLanguage.startsWith('de')}
-        className="min-h-11 min-w-11 flex items-center justify-center -my-2"
+        className="group min-h-11 min-w-11 flex items-center justify-center -my-2 focus-visible:outline-hidden"
       >
-        <span className={`px-3 py-1 rounded-md text-sm font-bold transition-all ${currentLanguage.startsWith('de') ? 'bg-white dark:bg-slate-700 shadow-xs text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}>
+        <span className={`px-3 py-1 rounded-md text-sm font-bold transition-all group-focus-visible:ring-2 group-focus-visible:ring-indigo-500 ${currentLanguage.startsWith('de') ? 'bg-white dark:bg-slate-700 shadow-xs text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}>
           DE
         </span>
       </button>

@@ -107,11 +107,16 @@ function Leaderboard({
                             // The button is a transparent hit area and the
                             // visible pill an inner span — styled directly,
                             // the 44px button WAS the pill (see the same fix
-                            // on the EN/DE switch, LanguageSwitcher).
-                            className="group ml-1 min-h-11 min-w-11 flex items-center justify-center -my-2"
+                            // on the EN/DE switch, LanguageSwitcher — that is
+                            // also where U-1, the button's own focus ring
+                            // hugging this invisible box instead of the
+                            // pill, is fixed the same way: outline hidden on
+                            // the button, group-focus-visible:ring-2 on the
+                            // pill below).
+                            className="group ml-1 min-h-11 min-w-11 flex items-center justify-center -my-2 focus-visible:outline-hidden"
                             title={t('game.kickPlayer', 'Kick Player')}
                           >
-                            <span className="text-red-600 dark:text-red-400 group-hover:text-white group-hover:bg-red-500 dark:group-hover:bg-red-600 px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded-full border border-red-200 dark:border-red-800 transition-colors shadow-xs">
+                            <span className="text-red-600 dark:text-red-400 group-hover:text-white group-hover:bg-red-500 dark:group-hover:bg-red-600 px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded-full border border-red-200 dark:border-red-800 group-focus-visible:ring-2 group-focus-visible:ring-indigo-500 transition-colors shadow-xs">
                               {t('game.kick', 'Kick')}
                             </span>
                           </button>

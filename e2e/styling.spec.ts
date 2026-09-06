@@ -1219,6 +1219,45 @@ test.describe('tap targets ≥ 44px on game-time controls (C65)', () => {
 });
 
 /**
+ * U-1 — the language switcher's buttons are a transparent 44px hit area
+ * (C65 above) with the visible EN/DE pill on an inner span; the button's own
+ * focus outline used to draw around that invisible box instead of the pill.
+ * LanguageSwitcher.tsx now hides the button's outline
+ * (focus-visible:outline-hidden) and puts a ring on the pill instead
+ * (group-focus-visible:ring-2 group-focus-visible:ring-indigo-500). The unit
+ * test pins the classes; only a real browser can confirm the outline is
+ * actually gone and the ring (a box-shadow) is actually there once the
+ * button is reached by real keyboard navigation.
+ */
+test.describe('language switcher keyboard focus ring sits on the pill (U-1)', () => {
+  const TAB_ATTEMPTS = 40;
+
+  test('the button shows no outline and the pill grows a ring once Tab reaches it', async ({ page }) => {
+    await page.goto('/');
+
+    const button = page.getByLabel('Switch to English');
+
+    // Walk the real tab order from the top of the document, the same bounded
+    // loop as the Random Order switch above — reachability (and genuine
+    // :focus-visible, which locator.focus() cannot guarantee on every
+    // engine) is the whole point.
+    await page.evaluate(() => document.body.focus());
+    let reached = false;
+    for (let i = 0; i < TAB_ATTEMPTS && !reached; i += 1) {
+      await page.keyboard.press('Tab');
+      reached = await button.evaluate(el => el === document.activeElement);
+    }
+    expect(reached, 'Tab never reached the EN language button').toBe(true);
+
+    await expect(button).toHaveCSS('outline-style', 'none');
+
+    const pill = page.getByText('EN', { exact: true });
+    const boxShadow = await pill.evaluate(el => getComputedStyle(el).boxShadow);
+    expect(boxShadow, 'the pill should carry the focus ring as a box-shadow').not.toBe('none');
+  });
+});
+
+/**
  * C69.2 — the two-tab and three-tab rows (personal/global, ruleset,
  * normal/custom) used to be a plain `flex ... justify-center` row, which
  * wraps onto a second line once the pills no longer fit a phone's width.

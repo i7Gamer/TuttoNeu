@@ -99,6 +99,19 @@ describe('Leaderboard', () => {
     expect(pill.className).toMatch(/rounded-full/);
   });
 
+  // U-1 (see LanguageSwitcher.tsx): the button's own focus outline hugged the
+  // invisible hit area, not the visible pill. The ring moves to the pill via
+  // `group-focus-visible`, and the button hides its own outline.
+  it('puts the keyboard focus ring on the Kick pill, not the hit area', () => {
+    render(<Leaderboard {...props({
+      sortedPlayers: [player({ name: 'Grace', socketId: GUEST_SOCKET, disconnected: true })],
+    })} />);
+    const button = screen.getByRole('button', { name: 'game.kick' });
+    const pill = screen.getByText('game.kick');
+    expect(button).toHaveClass('group', 'focus-visible:outline-hidden');
+    expect(pill).toHaveClass('group-focus-visible:ring-2', 'group-focus-visible:ring-indigo-500');
+  });
+
   it('offers no kick pill to a non-host, even though the badge still shows', () => {
     render(<Leaderboard {...props({
       isHost: false,

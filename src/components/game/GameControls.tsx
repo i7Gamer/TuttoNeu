@@ -283,8 +283,11 @@ export default function GameControls({
                         // causes mis-taps (MIN_TAP_TARGET_PX,
                         // e2e/styling.spec.ts) — while the visible chip is
                         // the inner span at its usual small size. Styled
-                        // directly, the 44px button was the chip.
-                        className="group min-h-11 flex items-center justify-center"
+                        // directly, the 44px button was the chip. Same
+                        // U-1 fix as the other three (LanguageSwitcher.tsx):
+                        // the button hides its own focus outline and the
+                        // chip below carries group-focus-visible:ring-2.
+                        className="group min-h-11 flex items-center justify-center focus-visible:outline-hidden"
                         // data-testid rather than an accessible-name lookup:
                         // "+{val}" is two adjacent JSX text nodes, and its
                         // exact rendered whitespace isn't worth pinning a
@@ -293,7 +296,7 @@ export default function GameControls({
                         data-testid={`quick-add-${val}`}
                         onClick={() => addScore(val)}
                       >
-                        <span className="w-full bg-(--card-bg) group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/50 text-indigo-700 dark:text-white font-bold py-1.5 md:py-2 text-sm md:text-base rounded-lg md:rounded-xl border border-indigo-100 dark:border-indigo-800 transition-colors shadow-xs">
+                        <span className="w-full bg-(--card-bg) group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/50 text-indigo-700 dark:text-white font-bold py-1.5 md:py-2 text-sm md:text-base rounded-lg md:rounded-xl border border-indigo-100 dark:border-indigo-800 group-focus-visible:ring-2 group-focus-visible:ring-indigo-500 transition-colors shadow-xs">
                           +{formatInt(val, i18n.language)}
                         </span>
                       </motion.button>

@@ -87,4 +87,26 @@ describe('LanguageSwitcher', () => {
     expect(dePill.className).not.toMatch(/bg-white|shadow-xs/);
     expect(deButton).toContainElement(dePill);
   });
+
+  // U-1: the button is a transparent 44px hit area, so the browser's own
+  // focus outline drew around the invisible box instead of the visible pill.
+  // The button hides its own outline and the pill (span) carries the ring
+  // instead, driven by the button's :focus-visible via the `group` class.
+  it('puts the keyboard focus ring on the pill, not the transparent hit area', () => {
+    mockUseTranslation({ language: 'en', changeLanguage: vi.fn() });
+
+    render(<LanguageSwitcher />);
+
+    const enButton = screen.getByRole('button', { name: 'Switch to English' });
+    const deButton = screen.getByRole('button', { name: 'Switch to German' });
+    for (const button of [enButton, deButton]) {
+      expect(button).toHaveClass('group', 'focus-visible:outline-hidden');
+    }
+
+    const enPill = screen.getByText('EN');
+    const dePill = screen.getByText('DE');
+    for (const pill of [enPill, dePill]) {
+      expect(pill).toHaveClass('group-focus-visible:ring-2', 'group-focus-visible:ring-indigo-500');
+    }
+  });
 });

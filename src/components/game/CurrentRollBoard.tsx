@@ -40,11 +40,14 @@ export default function CurrentRollBoard({
             // itself is a transparent hit area — the visible chip is the
             // inner span, so the 44px target no longer makes the chip 44px
             // tall (the same mistake the EN/DE pill had, LanguageSwitcher).
-            // "group" lets the chip take its hover colour from the button.
-            className="group min-h-11 flex items-center justify-center -my-2"
+            // "group" lets the chip take its hover colour from the button —
+            // and (U-1, see LanguageSwitcher.tsx) its keyboard focus ring:
+            // the button hides its own outline and the chip below carries
+            // group-focus-visible:ring-2 instead.
+            className="group min-h-11 flex items-center justify-center -my-2 focus-visible:outline-hidden"
             onClick={onSelectAllValid}
           >
-            <span className="text-xs font-bold px-2.5 py-1 rounded-md border border-indigo-300 dark:border-indigo-600 text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/30 transition-colors">
+            <span className="text-xs font-bold px-2.5 py-1 rounded-md border border-indigo-300 dark:border-indigo-600 text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/30 group-focus-visible:ring-2 group-focus-visible:ring-indigo-500 transition-colors">
               {t('dice.select_all_valid', 'Select all')}
             </span>
           </button>
