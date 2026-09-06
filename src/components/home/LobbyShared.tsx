@@ -219,7 +219,12 @@ interface DiceModeSelectorProps {
 export function DiceModeSelector({ diceMode, setDiceMode, nameSuffix = 'Lobby' }: DiceModeSelectorProps) {
   const { t } = useTranslation();
   return (
-    <fieldset className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 bg-white dark:bg-slate-800/50 px-4 py-3 sm:px-6 rounded-xl border border-gray-200 dark:border-slate-600 h-full min-h-[50px] min-w-0 m-0">
+    // min-h-[50px] and no h-full, here and on every sibling pill: the options
+    // row (LocalLobby/OnlineLobby) is items-stretch, which is what makes the
+    // pills on one line share the tallest one's height (the Animations pill
+    // carries a hint line). A percentage h-full against the row's auto height
+    // resolves to nothing and left the neighbours at 50px beside a 98px pill.
+    <fieldset className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 bg-white dark:bg-slate-800/50 px-4 py-3 sm:px-6 rounded-xl border border-gray-200 dark:border-slate-600 min-h-[50px] min-w-0 m-0">
       {/* sr-only: the option labels already read fine on their own, this
           legend only names the GROUP for a screen reader announcing it as
           one radio group rather than two unrelated buttons. */}
@@ -251,7 +256,7 @@ interface EnforceDiceModeToggleProps {
 export function EnforceDiceModeToggle({ diceMode, enforcedDiceMode, setEnforcedDiceMode }: EnforceDiceModeToggleProps) {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 bg-white dark:bg-slate-800/50 px-4 py-3 sm:px-6 rounded-xl border border-gray-200 dark:border-slate-600 h-full min-h-[50px]">
+    <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 bg-white dark:bg-slate-800/50 px-4 py-3 sm:px-6 rounded-xl border border-gray-200 dark:border-slate-600 min-h-[50px]">
       <label className="checkbox-wrapper text-gray-700 dark:text-gray-200">
         <input
           type="checkbox"
@@ -278,7 +283,7 @@ export function DiceModeEnforcedBadge({ enforcedDiceMode }: DiceModeEnforcedBadg
     ? t('lobby.digitalDice', 'Digital Dice')
     : t('lobby.physicalDice', 'Physical Dice');
   return (
-    <div className="flex items-center justify-center gap-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-4 py-3 sm:px-6 rounded-xl border border-indigo-100 dark:border-indigo-800 h-full min-h-[50px] font-medium">
+    <div className="flex items-center justify-center gap-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-4 py-3 sm:px-6 rounded-xl border border-indigo-100 dark:border-indigo-800 min-h-[50px] font-medium">
       {t('lobby.diceModeEnforcedBadge', 'Dice Mode: {{mode}} (set by host)', { mode: modeLabel })}
     </div>
   );
@@ -345,7 +350,7 @@ interface AudioSettingSelectorProps {
 export function AudioSettingSelector({ audioEnabled, setAudioEnabled, nameSuffix = 'Lobby' }: AudioSettingSelectorProps) {
   const { t } = useTranslation();
   return (
-    <fieldset className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 bg-white dark:bg-slate-800/50 px-4 py-3 sm:px-6 rounded-xl border border-gray-200 dark:border-slate-600 h-full min-h-[50px] min-w-0 m-0">
+    <fieldset className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 bg-white dark:bg-slate-800/50 px-4 py-3 sm:px-6 rounded-xl border border-gray-200 dark:border-slate-600 min-h-[50px] min-w-0 m-0">
       {/* sr-only legend: names the pair as one group, as DiceModeSelector does. */}
       <legend className="sr-only">{t('lobby.soundSetting', 'Sound')}</legend>
       <label className="radio-wrapper lobby-radio">
@@ -378,7 +383,7 @@ export function HapticsSettingSelector({ hapticsEnabled, setHapticsEnabled, name
   if (!hasVibrationSupport && !supportsIOSSwitchHaptic()) return null;
 
   return (
-    <fieldset className="flex sm:hidden flex-wrap items-center justify-center gap-2 sm:gap-6 bg-white dark:bg-slate-800/50 px-3 py-2 sm:px-6 sm:py-3 rounded-xl border border-gray-200 dark:border-slate-600 h-full min-h-[50px] min-w-0 m-0">
+    <fieldset className="flex sm:hidden flex-wrap items-center justify-center gap-2 sm:gap-6 bg-white dark:bg-slate-800/50 px-3 py-2 sm:px-6 sm:py-3 rounded-xl border border-gray-200 dark:border-slate-600 min-h-[50px] min-w-0 m-0">
       <legend className="sr-only">{t('lobby.hapticsSetting', 'Vibration')}</legend>
       <label className="radio-wrapper lobby-radio">
         <input type="radio" name={`hapticsSetting${nameSuffix}`} checked={hapticsEnabled === true} onChange={() => setHapticsEnabled(true)} />
@@ -417,7 +422,7 @@ export function AnimationsSettingSelector({ motionOverride, setMotionOverride, n
   // than its neighbours for it; the options row stretches its items, so the
   // others grow to match (Option B of the mockups Timo picked).
   return (
-    <div className="flex flex-col items-center gap-2 bg-white dark:bg-slate-800/50 px-4 py-3 sm:px-6 rounded-xl border border-gray-200 dark:border-slate-600 h-full min-h-[50px] min-w-0">
+    <div className="flex flex-col items-center gap-2 bg-white dark:bg-slate-800/50 px-4 py-3 sm:px-6 rounded-xl border border-gray-200 dark:border-slate-600 min-h-[50px] min-w-0">
       <fieldset className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 m-0 p-0 border-0 min-w-0">
         {/* sr-only legend + aria-hidden visible label, as RulesetSelector:
             the group is announced once, by the legend, and the visible word
@@ -455,7 +460,7 @@ export function AdvancedOptionsToggle({ showAdvanced, setShowAdvanced, panelId }
   const { t } = useTranslation();
   return (
     <button
-      className="flex items-center justify-center gap-2 text-indigo-600 dark:text-indigo-400 bg-white dark:bg-slate-800/50 hover:bg-gray-50 dark:hover:bg-slate-800 px-4 py-3 rounded-xl font-medium transition-colors border border-gray-200 dark:border-slate-600 h-full min-h-[50px]"
+      className="flex items-center justify-center gap-2 text-indigo-600 dark:text-indigo-400 bg-white dark:bg-slate-800/50 hover:bg-gray-50 dark:hover:bg-slate-800 px-4 py-3 rounded-xl font-medium transition-colors border border-gray-200 dark:border-slate-600 min-h-[50px]"
       onClick={() => setShowAdvanced(!showAdvanced)}
       aria-expanded={showAdvanced}
       aria-controls={panelId}

@@ -159,4 +159,29 @@ test.describe('Lobby animations override', () => {
     await expect(page.getByLabel('On', { exact: true })).toBeChecked();
     await expect(page.locator('html')).toHaveAttribute('data-motion', 'always');
   });
+
+  // The Animations pill is the one option pill with a hint line under its
+  // radios, so it is taller than its neighbours. The options row lays its
+  // items out with items-stretch, which only works when no item fixes its
+  // own height: a percentage h-full against an auto-height row resolves to
+  // nothing, and the Advanced Options button next to the pill sat at 50px
+  // beside a 98px pill (seen live on 2026-09-06).
+  test('every pill sharing a line with the Animations pill is as tall as it', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+    const pillLabel = page.getByText('Animations:');
+    await expect(pillLabel).toBeVisible();
+
+    const heights = await pillLabel.evaluate((label) => {
+      const pill = label.closest('fieldset')!.parentElement!;
+      const row = pill.parentElement!;
+      const top = Math.round(pill.getBoundingClientRect().top);
+      return [...row.children]
+        .map((el) => el.getBoundingClientRect())
+        .filter((box) => box.height > 0 && Math.round(box.top) === top)
+        .map((box) => Math.round(box.height));
+    });
+    expect(heights.length, 'at least the pill itself sits on its line').toBeGreaterThan(1);
+    expect(new Set(heights).size, `heights on the pill's line: ${heights.join(', ')}`).toBe(1);
+  });
 });
