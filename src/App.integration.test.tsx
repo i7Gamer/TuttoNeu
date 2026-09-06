@@ -684,10 +684,7 @@ describe('App Integration (End-to-End)', () => {
     await waitFor(() => expect(socket.disconnect).toHaveBeenCalled());
 
     // Should NOT attempt to join on error
-    expect(socket.emit).not.toHaveBeenCalledWith(
-      'joinRoom',
-      expect.any(Object)
-    );
+    expect(socket.emit.mock.calls.some((c) => c[0] === 'joinRoom')).toBe(false);
 
     mockSocketInstance = null;
   });

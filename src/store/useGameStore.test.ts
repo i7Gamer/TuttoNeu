@@ -660,17 +660,17 @@ describe('useGameStore', () => {
       // Online but not host — must not emit.
       useGameStore.setState({ isOnline: true, isHost: false, roomId: 'ROOM1' });
       useGameStore.getState().setWinningScore(7000);
-      expect(mockEmit).not.toHaveBeenCalledWith('updateConfig', expect.any(Object));
+      expect(emittedEvents()).not.toContain('updateConfig');
 
       // Host but not online (e.g. local mode) — must not emit.
       useGameStore.setState({ isOnline: false, isHost: true, roomId: 'ROOM1' });
       useGameStore.getState().setWinningScore(7100);
-      expect(mockEmit).not.toHaveBeenCalledWith('updateConfig', expect.any(Object));
+      expect(emittedEvents()).not.toContain('updateConfig');
 
       // Online + host but no roomId — must not emit.
       useGameStore.setState({ isOnline: true, isHost: true, roomId: null });
       useGameStore.getState().setWinningScore(7200);
-      expect(mockEmit).not.toHaveBeenCalledWith('updateConfig', expect.any(Object));
+      expect(emittedEvents()).not.toContain('updateConfig');
 
       // Online + host + roomId — must emit the full config snapshot.
       useGameStore.setState({
@@ -729,7 +729,7 @@ describe('useGameStore', () => {
 
     useGameStore.getState().sendReaction('🔥');
 
-    expect(mockEmit).not.toHaveBeenCalledWith('sendReaction', expect.anything());
+    expect(emittedEvents()).not.toContain('sendReaction');
     disconnectSocket();
   });
 
@@ -2054,7 +2054,7 @@ describe('useGameStore', () => {
 
           // Nothing to rejoin: the popup is stale and lowered immediately, and
           // no join was ever sent for a watchdog to be waiting on.
-          expect(mockEmit).not.toHaveBeenCalledWith('joinRoom', expect.anything(), expect.anything());
+          expect(emittedEvents()).not.toContain('joinRoom');
           expect(useGameStore.getState().showReconnectPopup).toBe(false);
           const toasts = useGameStore.getState().toasts.length;
           vi.advanceTimersByTime(JOIN_TIMEOUT_MS * 2);
@@ -2198,7 +2198,7 @@ describe('useGameStore', () => {
         expect(state.roomId, 'the room is given up, not refreshed').toBeNull();
         expect(state.mode).toBe('local');
         expect(sessionStorage.getItem('tutto_online_session')).toBeNull();
-        expect(mockEmit).not.toHaveBeenCalledWith('requestState', expect.anything());
+        expect(emittedEvents()).not.toContain('requestState');
       });
 
       it('stays quiet when the server refuses the push as rate-limited', () => {
@@ -2213,7 +2213,7 @@ describe('useGameStore', () => {
         pushes()[0][2]({ ok: false, reason: 'rate-limited' });
 
         expect(useGameStore.getState().toasts).toHaveLength(0);
-        expect(mockEmit).not.toHaveBeenCalledWith('requestState', expect.anything());
+        expect(emittedEvents()).not.toContain('requestState');
         expect(useGameStore.getState().roomId, 'and the seat is kept').toBe('ROOM1');
       });
 
@@ -2224,7 +2224,7 @@ describe('useGameStore', () => {
         pushes()[0][2]({ ok: true, stateVersion: 3 });
 
         expect(useGameStore.getState().toasts).toHaveLength(0);
-        expect(mockEmit).not.toHaveBeenCalledWith('requestState', expect.anything());
+        expect(emittedEvents()).not.toContain('requestState');
       });
 
       it('tolerates a server old enough to ack nothing', () => {
@@ -2234,7 +2234,7 @@ describe('useGameStore', () => {
         expect(() => pushes()[0][2](undefined)).not.toThrow();
 
         expect(useGameStore.getState().toasts).toHaveLength(0);
-        expect(mockEmit).not.toHaveBeenCalledWith('requestState', expect.anything());
+        expect(emittedEvents()).not.toContain('requestState');
       });
 
       it('retries an unauthorized refusal once when it lands right after a reconnect', () => {
@@ -2251,7 +2251,7 @@ describe('useGameStore', () => {
           // The rejoin race: the server saw the push before it saw the join.
           pushes()[0][2]({ ok: false, reason: 'unauthorized' });
           expect(useGameStore.getState().toasts, 'a race is not worth a toast').toHaveLength(0);
-          expect(mockEmit).not.toHaveBeenCalledWith('requestState', expect.anything());
+          expect(emittedEvents()).not.toContain('requestState');
 
           vi.advanceTimersByTime(PUSH_REJOIN_RETRY_DELAY_MS);
           expect(pushes(), 'the same snapshot goes out again').toHaveLength(2);
@@ -2769,7 +2769,7 @@ describe('useGameStore', () => {
         // Never: the server's leaveRoom takes no room argument and vacates
         // whatever the session points at, so tidying up this way would eject
         // the player from the room they are legitimately in.
-        expect(mockEmit).not.toHaveBeenCalledWith('leaveRoom');
+        expect(emittedEvents()).not.toContain('leaveRoom');
         // Resolved, not abandoned — OnlineLobby and App.tsx both await it.
         await expect(pending).resolves.toMatchObject({ success: true });
       });
@@ -3238,7 +3238,7 @@ describe('useGameStore', () => {
       mockOnHandlers['connect']();
 
       expect(useGameStore.getState().showReconnectPopup).toBe(false);
-      expect(mockEmit).not.toHaveBeenCalledWith('joinRoom', expect.anything(), expect.anything());
+      expect(emittedEvents()).not.toContain('joinRoom');
     });
 
     it('leaves the popup up on connect while a session restore is still in flight', () => {
@@ -4301,7 +4301,7 @@ describe('useGameStore', () => {
       joinCallback({ success: false });
 
       // Should NOT emit leaveRoom on failure
-      expect(mockEmit).not.toHaveBeenCalledWith('leaveRoom');
+      expect(emittedEvents()).not.toContain('leaveRoom');
       // But should still disconnect to clean up the temp socket
       expect(mockDisconnect).toHaveBeenCalled();
     });
@@ -4413,7 +4413,7 @@ describe('useGameStore', () => {
       // Should still disconnect even on error
       expect(mockDisconnect).toHaveBeenCalled();
       // Should not emit leaveRoom on failure
-      expect(mockEmit).not.toHaveBeenCalledWith('leaveRoom');
+      expect(emittedEvents()).not.toContain('leaveRoom');
     });
 
     it('cancelReconnect disconnects socket after 10s if joinRoom callback never fires', async () => {
@@ -5051,11 +5051,11 @@ describe('useGameStore', () => {
       // that would race with (or duplicate) the server's own authoritative advance.
       expect(useGameStore.getState().turnTimeRemaining).toBe(0);
       expect(useGameStore.getState().currentPlayerIndex).toBe(isHost ? 0 : 1);
-      expect(mockEmit).not.toHaveBeenCalledWith('pushState', expect.any(Object));
+      expect(emittedEvents()).not.toContain('pushState');
 
       // Advancing further must not somehow retrigger anything (interval was cleared).
       vi.advanceTimersByTime(5000);
-      expect(mockEmit).not.toHaveBeenCalledWith('pushState', expect.any(Object));
+      expect(emittedEvents()).not.toContain('pushState');
 
       vi.useRealTimers();
     });
@@ -5084,7 +5084,7 @@ describe('useGameStore', () => {
       // A dedicated, small event — not the full state-bundle 'pushState' event
       // (see server/socketHandlers.ts's separate 'liveTurnState' handler).
       expect(mockEmit).toHaveBeenCalledWith('liveTurnState', { roomId: 'ROOM1', liveTurnState: snapshot });
-      expect(mockEmit).not.toHaveBeenCalledWith('pushState', expect.anything());
+      expect(emittedEvents()).not.toContain('pushState');
     });
 
     it('setLiveTurnState does not include playerName in the liveTurnState pushed to the server', () => {
