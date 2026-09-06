@@ -179,6 +179,7 @@ export default function HelpPopup() {
         // App.tsx's language/theme corner already uses.
         className="fixed bottom-6 left-6 w-12 h-12 bg-white dark:bg-slate-800 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform z-100 text-indigo-500 dark:text-indigo-400 border border-gray-100 dark:border-slate-700"
         title={t('help.buttonTitle', 'Open Help / Wiki')}
+        aria-label={t('help.buttonTitle', 'Open Help / Wiki')}
       >
         <HelpCircle size={24} />
       </button>

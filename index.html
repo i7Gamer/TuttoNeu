@@ -132,7 +132,7 @@
 
           console.warn('[Auto-reload Check]', {
             message: e.message,
-            src: e.target?.src,
+            src: e.target && e.target.src,
             isChunkError: isChunkError,
             isScriptError: isScriptError,
             lastReload: hasLastReload ? new Date(lastReloadTime).toISOString() : null,
@@ -140,7 +140,7 @@
           });
 
           if (!hasLastReload || (now - lastReloadTime) > RELOAD_COOLDOWN_MS) {
-            console.error('[Auto-reloading] Triggering reload due to:', e.message || e.target?.src);
+            console.error('[Auto-reloading] Triggering reload due to:', e.message || (e.target && e.target.src));
             try {
               localStorage.setItem('tutto_last_reload', now.toString());
             } catch (storageWriteError) {

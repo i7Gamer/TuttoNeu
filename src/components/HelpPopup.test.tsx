@@ -31,6 +31,11 @@ describe('HelpPopup', () => {
     useGameStore.setState({ status: 'lobby', currentCard: null });
   });
 
+  it('has an aria-label on the help launcher for screen readers', () => {
+    render(<HelpPopup />);
+    expect(screen.getByTitle('help.buttonTitle')).toHaveAttribute('aria-label', 'help.buttonTitle');
+  });
+
   it('renders closed by default and opens on click', async () => {
     render(<HelpPopup />);
 

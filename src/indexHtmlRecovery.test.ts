@@ -119,6 +119,13 @@ describe('inline script extraction', () => {
 });
 
 describe('index.html stale-bundle recovery', () => {
+  it('uses plain ES5 only (no optional chaining or nullish coalescing)', () => {
+    const optionalChaining = /\?\./;
+    const nullishCoalescing = /\?\?/;
+    expect(inlineScript).not.toMatch(optionalChaining);
+    expect(inlineScript).not.toMatch(nullishCoalescing);
+  });
+
   beforeEach(() => {
     localStorage.clear();
     reload.mockClear();
