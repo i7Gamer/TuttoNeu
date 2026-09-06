@@ -54,6 +54,7 @@ export const clearRoomState = (): Pick<GameStore,
   | 'previousHighestFeuerwerkTurnScore' | 'previousHighestX2TurnScore'
   | 'previousPlayerName' | 'previousTurnSummary' | 'finishedGameSnapshot'
   | 'lastAppliedStateVersion' | 'gameTimeInSeconds' | 'showReconnectPopup' | 'reactions'
+  | 'roomStateSynced' | 'justReconnected' | 'preGameStats' | 'gameStartTime'
 > => ({
   players: [],
   currentPlayerIndex: null,
@@ -120,6 +121,20 @@ export const clearRoomState = (): Pick<GameStore,
   // `toasts`: surrenderSeat toasts the kick/takeover message before calling
   // this, on purpose.
   reactions: [],
+  // Four client-only, room-scoped fields — never part of the server's synced
+  // gameState (SYNCED_GAME_STATE_KEYS), so leaving them out of this object was
+  // invisible rather than harmless: joinRoom sets roomStateSynced false itself
+  // before the first sync, the Game mount effect refetches preGameStats, the
+  // gameState handler re-derives justReconnected, and startGame/the local
+  // clock re-anchor overwrite gameStartTime — every reachable path happened to
+  // write over the leftover before anything read it. EndScreen's lone
+  // `leaveRoom` alone (no follow-up setMode('local')) is the one caller that
+  // does not immediately overwrite these, and it stays online, so it is
+  // unaffected either way.
+  roomStateSynced: false,
+  justReconnected: false,
+  preGameStats: null,
+  gameStartTime: null,
   ...noUndoableTurn(),
 });
 

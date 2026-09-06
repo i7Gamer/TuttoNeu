@@ -4705,6 +4705,15 @@ describe('useGameStore', () => {
         previousWasBust: false, previousWasSuccess: true, previousHighestTurnScore: 100,
         gameTimeInSeconds: 321,
         reactions: [{ id: 1, emoji: '🔥', senderName: 'Bob' }],
+        // Client-only, room-scoped: never part of the server's gameState sync,
+        // but still tied to the room just abandoned (see clearRoomState).
+        roomStateSynced: true, justReconnected: true,
+        preGameStats: {
+          highestTurnScore: 500, fastestWinTurns: 3, fastestLossTurns: null,
+          highestFeuerwerkTurnScore: 100, highestX2TurnScore: 50,
+          mostCardsInTurn: 2, highestForfeitedTurnScore: 0,
+        },
+        gameStartTime: 123456,
       });
     };
 
@@ -4734,6 +4743,14 @@ describe('useGameStore', () => {
       // A reaction from the room just left would otherwise float over the
       // local game (or the join form) that replaced it.
       expect(s.reactions).toEqual([]);
+      // Client-only room-scoped fields (D-11): each used to be overwritten
+      // before anything read it (joinRoom, the Game mount effect, startGame,
+      // the local clock re-anchor), so leaving them behind was invisible —
+      // until now they reset with the rest of the room, by construction.
+      expect(s.roomStateSynced).toBe(false);
+      expect(s.justReconnected).toBe(false);
+      expect(s.preGameStats).toBeNull();
+      expect(s.gameStartTime).toBeNull();
     };
 
     it('leaveRoom drops the chart series, the activity log and the undo block', () => {
