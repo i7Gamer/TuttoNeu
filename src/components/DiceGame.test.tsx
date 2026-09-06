@@ -775,13 +775,17 @@ describe('DiceGame interactive turn logic', () => {
       queueRoll([2, 2, 3, 4, 6, 6]); // no 1, no 5, no triple: an immediate bust
       render(<DiceGame currentCard="200" onComplete={onComplete} />);
       await flushRoll();
+      const callsBefore = onComplete.mock.calls.length;
 
       expect(screen.getByText('dice.bust')).toBeInTheDocument();
       pressKey('a');
       pressKey('r');
       pressKey('s');
 
-      expect(onComplete).not.toHaveBeenCalledWith(expect.anything(), true);
+      // The !bustState clause of canAct is behaviourally unkillable: r/s/d need
+      // validation.valid (nothing is selected after a bust) and a calls selectAllValid.
+      expect(onComplete.mock.calls.length).toBe(callsBefore);
+      expect(selectedDice()).toHaveLength(0);
     });
   });
 
