@@ -39,7 +39,15 @@ const propertyOf = (utility) => {
     return !BG_NON_COLOR.test(value) && COLOR.test(value) ? 'background-color' : null;
   }
   if (utility.startsWith('text-')) return COLOR.test(utility.slice(5)) ? 'color' : null;
-  if (utility.startsWith('border-')) return COLOR.test(utility.slice(7)) ? 'border-color' : null;
+  if (utility.startsWith('border-')) {
+    const rest = utility.slice(7);
+    // A directional side (t/b/l/r/x/y plus the logical s/e) is its own
+    // property -- border-t-red-500 and border-l-red-500 don't conflict, only
+    // two utilities naming the SAME side do.
+    const dirMatch = rest.match(/^([tblrxyse])-(.*)$/);
+    if (dirMatch) return COLOR.test(dirMatch[2]) ? `border-${dirMatch[1]}-color` : null;
+    return COLOR.test(rest) ? 'border-color' : null;
+  }
   return null;
 };
 
@@ -124,7 +132,7 @@ export default {
     schema: [],
     messages: {
       conflict:
-        '"{{first}}" and "{{second}}" both set {{property}}{{variantNote}}. Tailwind applies only one of them, chosen by stylesheet order — did you mean "{{suggestion}}"?',
+        '"{{first}}" and "{{second}}" both set {{property}}{{variantNote}}. Tailwind applies only one of them, chosen by stylesheet order{{suggestionNote}}',
     },
   },
   create(context) {
@@ -138,8 +146,17 @@ export default {
             if (reported.has(signature)) continue;
             reported.add(signature);
             // The overwhelmingly common cause is a missing state prefix on the
-            // second half of a light/dark pair, so name the likely intent.
+            // second half of a light/dark pair, so name the likely intent --
+            // unless the variant already has `hover`, in which case there's no
+            // prefix left to add and the real fix is to drop one of the two
+            // (a variant of just "hover:bg-x hover:bg-y" is already the state
+            // it would suggest, not a light/dark pair missing one).
             const utility = second.slice(second.lastIndexOf(':') + 1);
+            const hasHover = variant !== '' && variant.split(':').includes('hover');
+            const suggestion = variant ? `${variant}:hover:${utility}` : `hover:${utility}`;
+            const suggestionNote = hasHover
+              ? ' — remove one of them.'
+              : ` — did you mean "${suggestion}"?`;
             context.report({
               node: node.value,
               messageId: 'conflict',
@@ -148,7 +165,7 @@ export default {
                 second,
                 property,
                 variantNote: variant ? ` under "${variant}"` : '',
-                suggestion: variant ? `${variant}:hover:${utility}` : `hover:${utility}`,
+                suggestionNote,
               },
             });
           }

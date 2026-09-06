@@ -79,4 +79,47 @@ describe('no-conflicting-classnames', () => {
     const messages = lint(`const X = () => <span className="bg-white dark:bg-slate-900" />;`);
     expect(messages).toHaveLength(0);
   });
+
+  // Round 13 / L-1: propertyOf sliced 7 chars off every border- utility
+  // ('border-'.length), so a directional utility like border-t-red-500 became
+  // t-red-500 and failed COLOR, leaving two conflicting sides unreported.
+  it('reports a conflict between two directional border colours on the same side', () => {
+    const messages = lint(
+      `const X = () => <span className="border-t-red-500 border-t-blue-500" />;`
+    );
+    expect(messages.length).toBeGreaterThan(0);
+  });
+
+  it('does not report a directional border width next to another width (not a colour)', () => {
+    const messages = lint(`const X = () => <span className="border-t-2 border-t-4" />;`);
+    expect(messages).toHaveLength(0);
+  });
+
+  it('does not report directional border colours on different sides', () => {
+    const messages = lint(
+      `const X = () => <span className="border-t-red-500 border-l-red-500" />;`
+    );
+    expect(messages).toHaveLength(0);
+  });
+
+  // Round 13 / L-3: the message always appended `did you mean "<variant>:hover:
+  // <utility>"?`, which for a variant that already carries hover produced the
+  // nonsensical hover:hover:bg-white. When the variant already has hover
+  // there's no prefix left to add -- the real fix is to drop one of the two.
+  it('says "remove one of them" instead of doubling hover: when the variant already has hover', () => {
+    const messages = lint(
+      `const X = () => <span className="hover:bg-red-500 hover:bg-blue-500" />;`
+    );
+    expect(messages.length).toBeGreaterThan(0);
+    expect(messages[0].message).toContain('remove one of them');
+    expect(messages[0].message).not.toContain('hover:hover:');
+  });
+
+  it('still suggests dark:hover:<utility> when the variant has no hover yet', () => {
+    const messages = lint(
+      `const X = () => <span className="dark:bg-slate-800 dark:bg-slate-900" />;`
+    );
+    expect(messages.length).toBeGreaterThan(0);
+    expect(messages[0].message).toContain('dark:hover:bg-slate-900');
+  });
 });
