@@ -1236,6 +1236,12 @@ test.describe('language switcher keyboard focus ring sits on the pill (U-1)', ()
     await page.goto('/');
 
     const button = page.getByLabel('Switch to English');
+    // The active pill already carries shadow-xs, so "box-shadow is not none"
+    // would hold without any ring: the ring has to show up as a CHANGE in
+    // the pill's box-shadow once focus arrives (Tailwind composes the ring
+    // into the same box-shadow property).
+    const pill = page.getByText('EN', { exact: true });
+    const shadowBeforeFocus = await pill.evaluate(el => getComputedStyle(el).boxShadow);
 
     // Walk the real tab order from the top of the document, the same bounded
     // loop as the Random Order switch above — reachability (and genuine
@@ -1251,9 +1257,8 @@ test.describe('language switcher keyboard focus ring sits on the pill (U-1)', ()
 
     await expect(button).toHaveCSS('outline-style', 'none');
 
-    const pill = page.getByText('EN', { exact: true });
-    const boxShadow = await pill.evaluate(el => getComputedStyle(el).boxShadow);
-    expect(boxShadow, 'the pill should carry the focus ring as a box-shadow').not.toBe('none');
+    const shadowWithFocus = await pill.evaluate(el => getComputedStyle(el).boxShadow);
+    expect(shadowWithFocus, 'the pill should have grown the focus ring').not.toBe(shadowBeforeFocus);
   });
 });
 
