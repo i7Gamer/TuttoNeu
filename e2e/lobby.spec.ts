@@ -130,30 +130,33 @@ test.describe('Lobby Random Order switch is operable without a mouse', () => {
  * Players whose OS asks for reduced motion get every animation collapsed
  * (MotionConfig in App.tsx plus the prefers-reduced-motion block in
  * index.css). The lobby offers them a per-device way back: an "Animations"
- * toggle that only exists under that OS setting, and whose "Always on" is
+ * toggle that only exists under that OS setting, and whose "On" is
  * applied through a data-motion attribute on the root element and kept in
  * localStorage, so it survives a reload the way Sound and Vibration do.
  */
 test.describe('Lobby animations override', () => {
-  test('is offered only under reduced motion, and "Always on" survives a reload', async ({ page }) => {
+  test('is offered only under reduced motion, and "On" survives a reload', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto('/');
     await expect(page.getByRole('button', { name: /Local Play/i })).toBeVisible();
-    await expect(page.getByLabel(/Always on/i)).toHaveCount(0);
+    // exact: "On" alone — /On/i would also match "Sound On".
+    await expect(page.getByLabel('On', { exact: true })).toHaveCount(0);
 
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.reload();
-    const alwaysOn = page.getByLabel(/Always on/i);
+    const alwaysOn = page.getByLabel('On', { exact: true });
     await expect(alwaysOn).toBeVisible();
-    await expect(page.getByLabel(/Follow system/i)).toBeChecked();
+    await expect(page.getByLabel('Reduced', { exact: true })).toBeChecked();
+    await expect(page.getByText(/Your device asks for less motion/)).toBeVisible();
     await expect(page.locator('html')).not.toHaveAttribute('data-motion', 'always');
 
     await alwaysOn.click();
     await expect(alwaysOn).toBeChecked();
+    await expect(page.getByText(/On for Tutto only/)).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('data-motion', 'always');
 
     await page.reload();
-    await expect(page.getByLabel(/Always on/i)).toBeChecked();
+    await expect(page.getByLabel('On', { exact: true })).toBeChecked();
     await expect(page.locator('html')).toHaveAttribute('data-motion', 'always');
   });
 });

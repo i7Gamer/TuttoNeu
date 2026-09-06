@@ -688,13 +688,29 @@ describe('AnimationsSettingSelector', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('renders the toggle when the OS asks for reduced motion', () => {
+  it('renders the toggle, named visibly, when the OS asks for reduced motion', () => {
     vi.mocked(usePrefersReducedMotion).mockReturnValue(true);
 
     render(<AnimationsSettingSelector motionOverride={false} setMotionOverride={vi.fn()} />);
 
-    expect(screen.getByText('lobby.animationsSystem')).toBeInTheDocument();
+    // "Follow system | Always on" alone never said what it followed: the
+    // visible "Animations:" label is what names the setting (Option B of the
+    // mockups Timo picked), the sr-only legend names the group.
+    expect(screen.getByText('lobby.animationsSetting:')).toBeInTheDocument();
+    expect(screen.getByText('lobby.animationsReduced')).toBeInTheDocument();
     expect(screen.getByText('lobby.animationsOn')).toBeInTheDocument();
+  });
+
+  it('explains the current choice in a hint line that changes with it', () => {
+    vi.mocked(usePrefersReducedMotion).mockReturnValue(true);
+
+    const { rerender } = render(<AnimationsSettingSelector motionOverride={false} setMotionOverride={vi.fn()} nameSuffix="Test" />);
+    expect(screen.getByText('lobby.animationsReducedDesc')).toBeInTheDocument();
+    expect(screen.queryByText('lobby.animationsOnDesc')).not.toBeInTheDocument();
+
+    rerender(<AnimationsSettingSelector motionOverride={true} setMotionOverride={vi.fn()} nameSuffix="Test" />);
+    expect(screen.getByText('lobby.animationsOnDesc')).toBeInTheDocument();
+    expect(screen.queryByText('lobby.animationsReducedDesc')).not.toBeInTheDocument();
   });
 
   it('exposes itself as a named group', () => {
@@ -705,15 +721,15 @@ describe('AnimationsSettingSelector', () => {
     expect(screen.getByRole('group', { name: 'lobby.animationsSetting' })).toBeInTheDocument();
   });
 
-  it('checks "Follow system" when motionOverride is false, and "Always on" when true', () => {
+  it('checks "Reduced" when motionOverride is false, and "On" when true', () => {
     vi.mocked(usePrefersReducedMotion).mockReturnValue(true);
 
     const { rerender } = render(<AnimationsSettingSelector motionOverride={false} setMotionOverride={vi.fn()} nameSuffix="Test" />);
-    expect(screen.getByText('lobby.animationsSystem').previousSibling).toHaveProperty('checked', true);
+    expect(screen.getByText('lobby.animationsReduced').previousSibling).toHaveProperty('checked', true);
     expect(screen.getByText('lobby.animationsOn').previousSibling).toHaveProperty('checked', false);
 
     rerender(<AnimationsSettingSelector motionOverride={true} setMotionOverride={vi.fn()} nameSuffix="Test" />);
-    expect(screen.getByText('lobby.animationsSystem').previousSibling).toHaveProperty('checked', false);
+    expect(screen.getByText('lobby.animationsReduced').previousSibling).toHaveProperty('checked', false);
     expect(screen.getByText('lobby.animationsOn').previousSibling).toHaveProperty('checked', true);
   });
 
@@ -731,7 +747,7 @@ describe('AnimationsSettingSelector', () => {
     // fires no onChange, same as DiceModeSelector's own toggle test.
     rerender(<AnimationsSettingSelector motionOverride={true} setMotionOverride={setMotionOverride} nameSuffix="Test" />);
 
-    fireEvent.click(screen.getByText('lobby.animationsSystem'));
+    fireEvent.click(screen.getByText('lobby.animationsReduced'));
     expect(setMotionOverride).toHaveBeenCalledWith(false);
   });
 });

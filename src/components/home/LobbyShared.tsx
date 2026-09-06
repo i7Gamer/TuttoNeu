@@ -410,19 +410,35 @@ export function AnimationsSettingSelector({ motionOverride, setMotionOverride, n
 
   if (!prefersReducedMotion) return null;
 
+  // Laid out like RulesetSelector, not like the Sound pill: "Sound On |
+  // Muted" explains itself, but "Follow system | Always on" never said what
+  // it followed, so this one carries a visible "Animations:" label and a hint
+  // line that spells out what the current choice does. The pill is taller
+  // than its neighbours for it; the options row stretches its items, so the
+  // others grow to match (Option B of the mockups Timo picked).
   return (
-    <fieldset className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 bg-white dark:bg-slate-800/50 px-4 py-3 sm:px-6 rounded-xl border border-gray-200 dark:border-slate-600 h-full min-h-[50px] min-w-0 m-0">
-      {/* sr-only legend: names the pair as one group, as the other lobby toggles do. */}
-      <legend className="sr-only">{t('lobby.animationsSetting', 'Animations')}</legend>
-      <label className="radio-wrapper lobby-radio">
-        <input type="radio" name={`animationsSetting${nameSuffix}`} checked={motionOverride === false} onChange={() => setMotionOverride(false)} />
-        <span className="font-medium">{t('lobby.animationsSystem', 'Follow system')}</span>
-      </label>
-      <label className="radio-wrapper lobby-radio">
-        <input type="radio" name={`animationsSetting${nameSuffix}`} checked={motionOverride === true} onChange={() => setMotionOverride(true)} />
-        <span className="font-medium">{t('lobby.animationsOn', 'Always on')}</span>
-      </label>
-    </fieldset>
+    <div className="flex flex-col items-center gap-2 bg-white dark:bg-slate-800/50 px-4 py-3 sm:px-6 rounded-xl border border-gray-200 dark:border-slate-600 h-full min-h-[50px] min-w-0">
+      <fieldset className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 m-0 p-0 border-0 min-w-0">
+        {/* sr-only legend + aria-hidden visible label, as RulesetSelector:
+            the group is announced once, by the legend, and the visible word
+            is not read a second time. */}
+        <legend className="sr-only">{t('lobby.animationsSetting', 'Animations')}</legend>
+        <span aria-hidden="true" className="font-semibold text-gray-800 dark:text-gray-100">{t('lobby.animationsSetting', 'Animations')}:</span>
+        <label className="radio-wrapper lobby-radio">
+          <input type="radio" name={`animationsSetting${nameSuffix}`} checked={motionOverride === false} onChange={() => setMotionOverride(false)} />
+          <span className="font-medium">{t('lobby.animationsReduced', 'Reduced')}</span>
+        </label>
+        <label className="radio-wrapper lobby-radio">
+          <input type="radio" name={`animationsSetting${nameSuffix}`} checked={motionOverride === true} onChange={() => setMotionOverride(true)} />
+          <span className="font-medium">{t('lobby.animationsOn', 'On')}</span>
+        </label>
+      </fieldset>
+      <p className="text-sm text-gray-500 dark:text-gray-400 text-center max-w-xs text-balance">
+        {motionOverride
+          ? t('lobby.animationsOnDesc', 'On for Tutto only. Your device still asks other apps for less motion.')
+          : t('lobby.animationsReducedDesc', 'Your device asks for less motion, so dice, cards and popups do not animate.')}
+      </p>
+    </div>
   );
 }
 
