@@ -33,9 +33,20 @@ vi.mock('canvas-confetti', () => ({
   default: vi.fn(),
 }));
 
+// The mock's button calls onComplete TWICE in one handler. A second click
+// cannot reach the real panel: Game unmounts the dice ModalShell outright on
+// the first completion, so the second click lands on a detached node and
+// no listener runs (that case stayed green with the guard removed). What the
+// guard promises the dice panel is narrower — a completion that fires twice
+// for one turn slot, the shape of the racing-input double bank 1.5.6 fixed
+// inside DiceGame, commits once — and this is that call pattern.
 vi.mock('./DiceGame', () => ({
-  default: () => <div data-testid="mock-dice-game">Dice Game</div>,
+  default: ({ onComplete }: { onComplete: (score: number, isSuccess: boolean) => void }) => (
+    <button onClick={() => { onComplete(MOCK_DICE_SCORE, true); onComplete(MOCK_DICE_SCORE, true); }}>mock-dice-complete</button>
+  ),
 }));
+
+const MOCK_DICE_SCORE = 300;
 
 describe('Game double-commit (D-15)', () => {
   beforeEach(() => {
@@ -99,6 +110,31 @@ describe('Game double-commit (D-15)', () => {
     expect(state.historyLog.length).toBe(1);
     expect(state.historyLog[0].score).toBe(500);
     expect(state.players.find(p => p.name === 'Alice')?.score).toBe(500);
+  });
+
+  it('a double click on the classic Bust button forfeits only one turn', () => {
+    useGameStore.setState({ ruleset: 'classic', currentCard: '300' });
+    render(<Game />);
+
+    const bustButton = screen.getByTestId('physical-bust');
+    fireEvent.click(bustButton);
+    fireEvent.click(bustButton);
+
+    expect(useGameStore.getState().historyLog.length).toBe(1);
+    expect(useGameStore.getState().currentPlayerIndex).toBe(1);
+  });
+
+  it('a dice completion that fires twice for one turn banks the roll only once', () => {
+    useGameStore.setState({ diceMode: 'digital', currentCard: '300' });
+    render(<Game />);
+
+    fireEvent.click(screen.getByText('game.controls.rollDice'));
+    fireEvent.click(screen.getByText('mock-dice-complete'));
+
+    const state = useGameStore.getState();
+    expect(state.historyLog.length).toBe(1);
+    expect(state.players.find(p => p.name === 'Alice')?.score).toBe(MOCK_DICE_SCORE);
+    expect(state.currentPlayerIndex).toBe(1);
   });
 
   it('commit, undo, commit again still lands the second commit', () => {
