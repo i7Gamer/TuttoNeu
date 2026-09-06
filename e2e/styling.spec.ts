@@ -1257,8 +1257,12 @@ test.describe('language switcher keyboard focus ring sits on the pill (U-1)', ()
 
     await expect(button).toHaveCSS('outline-style', 'none');
 
-    const shadowWithFocus = await pill.evaluate(el => getComputedStyle(el).boxShadow);
-    expect(shadowWithFocus, 'the pill should have grown the focus ring').not.toBe(shadowBeforeFocus);
+    // Polled, not read once: the pill's transition-all covers box-shadow, so
+    // a sample taken in the first frame after the keypress can still hold
+    // the pre-focus value (seen live: the ring read as absent for one frame).
+    await expect.poll(() => pill.evaluate(el => getComputedStyle(el).boxShadow), {
+      message: 'the pill should have grown the focus ring',
+    }).not.toBe(shadowBeforeFocus);
   });
 });
 
